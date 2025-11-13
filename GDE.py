@@ -96,7 +96,7 @@ with st.expander("📘 Upload do Relatório 200", expanded=st.session_state.expa
     uploaded_rel200 = st.file_uploader("Escolha o arquivo", type=["xlsx"], key="rel200")
 if uploaded_rel200:
     st.session_state.expander_rel200 = False
-    st.session_state.df_200 = pd.read_excel(uploaded_rel200, skiprows=1)
+    st.session_state.df_200 = pd.read_excel(uploaded_rel200, skiprows=2)
 
 with st.expander("📘 Upload do Relatório 455", expanded=st.session_state.expander_rel455):
     uploaded_rel455 = st.file_uploader("Escolha o arquivo", type=["xlsx"], key="rel455")
