@@ -207,11 +207,15 @@ if 'df_455' in st.session_state:
 
     df_final = df_final[["CT-e", "Placa_Final", "Motorista", "Cliente", "Destino", "Cidade", "NF's", "Tipo"]].copy()
 
-    # cria Status e nova NF vazia (removendo NF's antiga)
+    # cria Status e renomeia NF's mantendo conteúdo
     df_final["Status"] = ""
+
+    # renomeia NF's para NF e mantém o conteúdo original
     if "NF's" in df_final.columns:
-        df_final = df_final.drop(columns=["NF's"])
-    df_final["NF"] = ""
+        df_final = df_final.rename(columns={"NF's": "NF"})
+    else:
+        df_final["NF"] = ""
+
 
     # --- Importação automática da base Shipment (Google Sheets CSV) ---
     url_ship = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm_mQYZvgTLu4C6Xpu1FvXw_IX0Eatl9MRMxkhH8BylxZO0POFN_oji0XxnGddkvaGN3PDJYYWD_Ed/pub?output=csv"
