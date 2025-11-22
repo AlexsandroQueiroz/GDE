@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import io
 
-st.set_page_config(page_title="Dashboard Dinâmico - 073 (Reescrito)", layout="wide")
+st.set_page_config(page_title="GDE", layout="wide")
 st.markdown(
     """
     <style>
@@ -20,7 +20,7 @@ st.markdown(
 st.image("data:image/png;base64,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",width=150)
 st.title("Gestão de entregas (Reescrito)")
 
-# --- dicionario_placas (mantive seu mapeamento original)
+#dicionario_placas
 dicionario_placas = { 
     "AUU2168": "JEAN CARLO FILUS",
     "ARK2319": "GILMAR BONETE",
@@ -116,7 +116,7 @@ if uploaded_rel455:
     st.session_state.expander_rel455 = False
     st.session_state.df_455 = pd.read_excel(uploaded_rel455, skiprows=1)
 
-# Date window logic (same as original)
+# Logica de data
 agora = datetime.now()
 dia_semana = agora.weekday()
 if dia_semana == 0:
@@ -127,7 +127,7 @@ fim = agora.replace(hour=7, minute=0, second=0, microsecond=0)
 
 if 'df_200' in st.session_state:
     df_200 = st.session_state.df_200
-    # keep original filters
+    
     if "SITUACAO" in df_200.columns:
         df_200 = df_200[~df_200["SITUACAO"].astype(str).str.contains("CANCELADO", case=False, na=False)]
     df_200["datahorasaida"] = pd.to_datetime(
@@ -145,7 +145,7 @@ fim_dia = fim.date()
 
 if 'df_455' in st.session_state:
     df_455 = st.session_state.df_455.copy()
-    # normalize date columns
+    
     for col in ["Data do Ultimo Manifesto", "Data do Ultimo Romaneio"]:
         if col in df_455.columns:
             df_455[col] = pd.to_datetime(df_455[col], errors="coerce").dt.date
@@ -155,7 +155,7 @@ if 'df_455' in st.session_state:
     condicao_r = (df_455.get("Data do Ultimo Romaneio") >= inicio_dia) & (df_455.get("Data do Ultimo Romaneio") < fim_dia)
     df_455f = df_455[condicao_m | condicao_r].copy()
 
-    # filters from original code
+    
     if "Unidade da Ultima Ocorrencia" in df_455f.columns:
         df_455f = df_455f[df_455f["Unidade da Ultima Ocorrencia"] != "BTR - JK2"]
     if "Codigo da Ultima Ocorrencia" in df_455f.columns:
@@ -166,7 +166,7 @@ if 'df_455' in st.session_state:
     if "Mercadoria" in df_455f.columns:
         df_455f = df_455f[~df_455f["Mercadoria"].isin(["  168-PALLETS", "  001-DIVERSOS"])]
 
-    # Ajustes e mapeamentos
+    
     if "Ultimo Manifesto" in df_455f.columns:
         df_455f["Manifesto_Ajustado"] = df_455f["Ultimo Manifesto"].astype(str).str.replace(" ", "", regex=False)
     df_455f["Placa_Final"] = df_455f.get("Placa de Entrega")
@@ -200,37 +200,36 @@ if 'df_455' in st.session_state:
 
     df_final = df_455f.rename(columns=rename_map)
 
-    # ensure required columns exist before selecting
     for c in ["CT-e", "Placa_Final", "Motorista", "Cliente", "Destino", "Cidade", "NF's", "Tipo"]:
         if c not in df_final.columns:
             df_final[c] = ""
 
     df_final = df_final[["CT-e", "Placa_Final", "Motorista", "Cliente", "Destino", "Cidade", "NF's", "Tipo"]].copy()
 
-    # cria Status e renomeia NF's mantendo conteúdo
+    
     df_final["Status"] = ""
 
-    # renomeia NF's para NF e mantém o conteúdo original
+    
     if "NF's" in df_final.columns:
         df_final = df_final.rename(columns={"NF's": "NF"})
     else:
         df_final["NF"] = ""
 
 
-    # --- Importação automática da base Shipment (Google Sheets CSV) ---
+    #Shipment (Google Sheets CSV)
     url_ship = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm_mQYZvgTLu4C6Xpu1FvXw_IX0Eatl9MRMxkhH8BylxZO0POFN_oji0XxnGddkvaGN3PDJYYWD_Ed/pub?output=csv"
 
     try:
         df_ship = pd.read_csv(url_ship)
         df_ship.columns = df_ship.columns.str.strip()
-        # assume A = CT-e, C = Shipment (as requested)
+        # assume A = CT-e, C = Shipment
         if len(df_ship.columns) >= 3:
             df_ship = df_ship.rename(columns={df_ship.columns[0]: "CT-e", df_ship.columns[2]: "Shipment"})
         else:
-            # fallback: try common names
+            
             df_ship = df_ship.rename(columns={df_ship.columns[0]: "CT-e"})
             if "Shipment" not in df_ship.columns:
-                # try to find a column containing 'Shipment' in its name
+                
                 for col in df_ship.columns:
                     if "ship" in col.lower():
                         df_ship = df_ship.rename(columns={col: "Shipment"})
@@ -239,7 +238,7 @@ if 'df_455' in st.session_state:
         st.error(f"Não foi possível carregar a base Shipment: {e}")
         df_ship = pd.DataFrame(columns=["CT-e", "Shipment"])
 
-    # Ajuste da Shipment conforme regra: remove 1º dígito (esperado 8), remove últimos 2 dígitos (esperado 12), prefixa 700
+    # Ajuste da Shipment
     def ajustar_shipment(x):
         if pd.isna(x) or str(x).strip() == "":
             return ""
@@ -248,7 +247,7 @@ if 'df_455' in st.session_state:
         s_digits = "".join(ch for ch in s if ch.isdigit())
         if len(s_digits) <= 3:
             return s_digits
-        # remove first char and last two chars safely
+        
         core = s_digits[1:-2] if len(s_digits) > 3 else ""
         if core == "":
             return ""
@@ -259,31 +258,31 @@ if 'df_455' in st.session_state:
     else:
         df_ship["Shipment"] = ""
 
-    # Merge shipments
+    
     if "CT-e" not in df_ship.columns:
         st.warning("A base Shipment não possui coluna CT-e reconhecida; a coluna Shipment ficará vazia.")
         df_ship["CT-e"] = ""
 
     df_final = df_final.merge(df_ship[["CT-e", "Shipment"]], on="CT-e", how="left")
 
-    # Rename Placa_Final to Placa to match requested output
+    
     df_final = df_final.rename(columns={"Placa_Final": "Placa"})
 
-    # Reorder columns exactly as requested
+    
     final_order = ["CT-e", "Status", "Placa", "Motorista", "Cliente", "Destino", "Cidade", "Shipment", "NF", "Tipo"]
     for col in final_order:
         if col not in df_final.columns:
             df_final[col] = ""
     df_final = df_final[final_order].copy()
 
-    # REMOVER DUPLICATAS POR CT-e
+    
     df_final = df_final.drop_duplicates(subset=["CT-e"], keep="first")
 
-    # Display and download
+    
     st.subheader("Relatório Consolidado")
     st.dataframe(df_final.set_index('CT-e'), use_container_width=True)
 
-    # Prepare excel file
+    
     df_final = df_final.sort_values(by="Motorista").reset_index(drop=True)
     excel_buffer = io.BytesIO()
     with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
@@ -312,7 +311,7 @@ if 'df_455' in st.session_state:
         except Exception:
             pass
 
-        # alternating colors by motorista
+        
         motoristas = df_final["Motorista"].fillna("").astype(str).tolist()
         colors = ['#FFFFFF', '#F2F2F2']
         for row_num, motorista in enumerate(motoristas, start=1):
