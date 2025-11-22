@@ -164,71 +164,14 @@ if 'df_455' in st.session_state:
     ]
     df_final["Status"] = ""
     
-        # Remover coluna NF's
-    if "NF's" in df_final.columns:
-        df_final = df_final.drop(columns=["NF's"])
-
-
     # ---------------------------------------------------------
     # Importação automática da base Shipment (Google Sheets CSV)
     # ---------------------------------------------------------
 
     url_ship = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm_mQYZvgTLu4C6Xpu1FvXw_IX0Eatl9MRMxkhH8BylxZO0POFN_oji0XxnGddkvaGN3PDJYYWD_Ed/pub?output=csv"
+
+    # Lê o CSV publicado
     df_ship = pd.read_csv(url_ship)
-
-    # Padroniza nomes das colunas
-    df_ship.columns = df_ship.columns.str.strip()
-
-    # Colunas: A = CT-e , C = Shipment
-    df_ship = df_ship.rename(columns={
-        df_ship.columns[0]: "CT-e",
-        df_ship.columns[2]: "Shipment"
-    })
-
-    # Ajuste da Shipment:
-    # Exemplo: 8247335512
-    # Remove o 8 inicial -> 247335512
-    # Remove o 12 final -> 2473355
-    # Adiciona 700 -> 7002473355
-
-    def ajustar_shipment(x):
-        if pd.isna(x):
-            return ""
-        x = str(x).strip()
-        if len(x) <= 3:
-            return x
-        x = x[1:]          # remove o primeiro caractere (8)
-        x = x[:-2]         # remove os dois últimos caracteres (12)
-        return "700" + x   # adiciona 700 no início
-
-    df_ship["Shipment"] = df_ship["Shipment"].apply(ajustar_shipment)
-
-
-    # Faz o merge pelo CT-e
-    df_final = df_final.merge(df_ship, on="CT-e", how="left")
-
-    # ---------------------------------------------------------
-    # Reorganiza colunas na ordem solicitada
-    # ---------------------------------------------------------
-
-    colunas_final = [
-        "CT-e",
-        "Status",
-        "Placa_Final",
-        "Motorista",
-        "Cliente",
-        "Destino",
-        "Cidade",
-        "NF",           # substitui NF's
-        "Shipment",
-        "Tipo"
-    ]
-
-    # Se não existir coluna NF no df_final, cria vazia
-    if "NF" not in df_final.columns:
-        df_final["NF"] = ""
-
-    df_final = df_final[colunas_final]
 
     # Garante que as colunas estejam com nomes certinhos
     df_ship.columns = df_ship.columns.str.strip()
