@@ -164,6 +164,34 @@ if 'df_455' in st.session_state:
     ]
     df_final["Status"] = ""
     
+    # ---------------------------------------------------------
+    # Importação automática da base Shipment (Google Sheets CSV)
+    # ---------------------------------------------------------
+
+    url_ship = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm_mQYZvgTLu4C6Xpu1FvXw_IX0Eatl9MRMxkhH8BylxZO0POFN_oji0XxnGddkvaGN3PDJYYWD_Ed/pub?output=csv"
+
+    # Lê o CSV publicado
+    df_ship = pd.read_csv(url_ship)
+
+    # Garante que as colunas estejam com nomes certinhos
+    df_ship.columns = df_ship.columns.str.strip()
+
+    # Renomeia as colunas para padrão
+    df_ship = df_ship.rename(columns={
+        df_ship.columns[0]: "CT-e",      # coluna A
+        df_ship.columns[2]: "Shipment"   # coluna C
+    })
+
+    # Faz o merge pelo CT-e
+    df_final = df_final.merge(df_ship, on="CT-e", how="left")
+
+    # Reorganiza para colocar Shipment logo após Status
+    colunas = df_final.columns.tolist()
+    colunas.remove("Shipment")
+    pos = colunas.index("Status") + 1
+    colunas.insert(pos, "Shipment")
+    df_final = df_final[colunas]
+
     cols = df_final.columns.tolist()
     cols.remove("Status")
     ct_index = cols.index("CT-e")
