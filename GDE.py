@@ -276,6 +276,9 @@ if 'df_455' in st.session_state:
             df_final[col] = ""
     df_final = df_final[final_order].copy()
 
+    # REMOVER DUPLICATAS POR CT-e
+    df_final = df_final.drop_duplicates(subset=["CT-e"], keep="first")
+    
     # Display and download
     st.subheader("Relatório Consolidado")
     st.dataframe(df_final.set_index('CT-e'), use_container_width=True)
