@@ -153,50 +153,66 @@ if 'df_455' in st.session_state:
     df_455f["Motorista"] = df_455f["Placa_Final"].map(mapa_placa_motorista)
     df_455f["Motorista"] = df_455f.apply(lambda row: dicionario_placas.get(row["Placa_Final"], row["Motorista"]),axis=1)
 
-    # Montar tabela final
+        # Montar tabela final
     df_final = df_455f.rename(columns={
         "Serie/Numero CTRC": "CT-e",
         "Cliente Remetente": "Cliente",
         "Cliente Destinatario": "Destino",
         "Cidade de Entrega": "Cidade",
         "Mercadoria": "Tipo",
-        "Notas Fiscais": "NF's"})[["CT-e", "Placa_Final", "Motorista", "Cliente", "Destino", "Cidade", "NF's", "Tipo"]
-    ]
+        "Notas Fiscais": "NF's"
+    })[["CT-e", "Placa_Final", "Motorista", "Cliente", "Destino", "Cidade", "NF's", "Tipo"]]
+
+    # cria coluna Status
     df_final["Status"] = ""
-    
+
+    # remover NF’s antiga
+    if "NF's" in df_final.columns:
+        df_final = df_final.drop(columns=["NF's"])
+
+    # cria NF vazia
+    df_final["NF"] = ""
+
     # ---------------------------------------------------------
     # Importação automática da base Shipment (Google Sheets CSV)
     # ---------------------------------------------------------
 
     url_ship = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm_mQYZvgTLu4C6Xpu1FvXw_IX0Eatl9MRMxkhH8BylxZO0POFN_oji0XxnGddkvaGN3PDJYYWD_Ed/pub?output=csv"
-
-    # Lê o CSV publicado
     df_ship = pd.read_csv(url_ship)
 
-    # Garante que as colunas estejam com nomes certinhos
+    # Padroniza nomes das colunas
     df_ship.columns = df_ship.columns.str.strip()
 
-    # Renomeia as colunas para padrão
+    # Colunas: A = CT-e , C = Shipment
     df_ship = df_ship.rename(columns={
-        df_ship.columns[0]: "CT-e",      # coluna A
-        df_ship.columns[2]: "Shipment"   # coluna C
+        df_ship.columns[0]: "CT-e",
+        df_ship.columns[2]: "Shipment"
     })
 
-    # Faz o merge pelo CT-e
+    # Ajuste da Shipment
+    def ajustar_shipment(x):
+        if pd.isna(x):
+            return ""
+        x = str(x).strip()
+        if len(x) < 4:
+            return x
+        x = x[1:]      # remove primeiro dígito (8)
+        x = x[:-2]     # remove os dois últimos dígitos (12)
+        return "700" + x
+
+    df_ship["Shipment"] = df_ship["Shipment"].apply(ajustar_shipment)
+
+    # Merge CT-e
     df_final = df_final.merge(df_ship, on="CT-e", how="left")
 
-    # Reorganiza para colocar Shipment logo após Status
-    colunas = df_final.columns.tolist()
-    colunas.remove("Shipment")
-    pos = colunas.index("Status") + 1
-    colunas.insert(pos, "Shipment")
-    df_final = df_final[colunas]
+    # ---------------------------------------------------------
+    # Reorganiza colunas na ordem solicitada
+    # ---------------------------------------------------------
 
-    cols = df_final.columns.tolist()
-    cols.remove("Status")
-    ct_index = cols.index("CT-e")
-    cols.insert(ct_index + 1, "Status")
-    df_final = df_final[cols]
+    df_final = df_final[
+        ["CT-e", "Status", "Placa_Final", "Motorista",
+         "Cliente", "Destino", "Cidade", "NF", "Shipment", "Tipo"]
+    ]
 
     st.subheader("Relatório Consolidado")
     st.dataframe(df_final.set_index('CT-e'), use_container_width=True) 
@@ -234,7 +250,7 @@ if 'df_455' in st.session_state:
         colors = ['#FFFFFF', '#F2F2F2']  
         motorista_color_map = {m: colors[i % 2] for i, m in enumerate(motoristas)}
 
-        for row_num, motorista in enumerate(df_final["Motorista"], start=1):
+        for row_num, motorista in enumerate(    ["Motorista"], start=1):
             bg_color = motorista_color_map[motorista]
             format_row = workbook.add_format({'bg_color': bg_color})
             worksheet.set_row(row_num, None, format_row)
