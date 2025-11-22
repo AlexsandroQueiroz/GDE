@@ -270,7 +270,7 @@ if 'df_455' in st.session_state:
     df_final = df_final.rename(columns={"Placa_Final": "Placa"})
 
     # Reorder columns exactly as requested
-    final_order = ["CT-e", "Status", "Placa", "Motorista", "Cliente", "Destino", "Cidade", "NF", "Shipment", "Tipo"]
+    final_order = ["CT-e", "Status", "Placa", "Motorista", "Cliente", "Destino", "Cidade", "Shipment", "NF", "Tipo"]
     for col in final_order:
         if col not in df_final.columns:
             df_final[col] = ""
@@ -278,7 +278,7 @@ if 'df_455' in st.session_state:
 
     # REMOVER DUPLICATAS POR CT-e
     df_final = df_final.drop_duplicates(subset=["CT-e"], keep="first")
-    
+
     # Display and download
     st.subheader("Relatório Consolidado")
     st.dataframe(df_final.set_index('CT-e'), use_container_width=True)
