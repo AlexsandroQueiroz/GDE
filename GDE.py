@@ -307,10 +307,11 @@ if 'df_455' in st.session_state:
             pass
 
         # cor alternada por motorista (fallback seguro)
-        motoristas = df_final["Motorista"].fillna("").astype(str).tolist()
-        colors = ['#FFFFFF', '#F2F2F2']
-        for row_num, motorista in enumerate(motoristas, start=1):
-            bg_color = colors[hash(motorista) % 2]
+        placas = df_final["Placa"].fillna("").astype(str).tolist()
+        paleta = ['#FFFFFF', '#F2F2F2']
+        for row_num, placa in enumerate(placas, start=1):
+            idx = abs(hash(placa)) % len(paleta)
+            bg_color = paleta[idx]
             format_row = workbook.add_format({'bg_color': bg_color})
             worksheet.set_row(row_num, None, format_row)
 
