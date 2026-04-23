@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
@@ -37,57 +36,86 @@ if uploaded_rel455:
     st.session_state.expander_rel455 = False
     st.session_state.df_455 = pd.read_excel(uploaded_rel455, skiprows=1)
 
-
 # Janela de datas
 agora = datetime.now()
 dia_semana = agora.weekday()
+
 if dia_semana == 0:
     inicio = (agora - timedelta(days=3)).replace(hour=7, minute=0, second=0, microsecond=0)
 else:
     inicio = (agora - timedelta(days=1)).replace(hour=7, minute=0, second=0, microsecond=0)
+
 fim = agora.replace(hour=7, minute=0, second=0, microsecond=0)
 
+# ================= REL 200 =================
 if 'df_200' in st.session_state:
     df_200 = st.session_state.df_200.copy()
+
     if "SITUACAO" in df_200.columns:
         df_200 = df_200[~df_200["SITUACAO"].astype(str).str.contains("CANCELADO", case=False, na=False)]
+
     df_200["datahorasaida"] = pd.to_datetime(
         df_200.get("DIA_SAIDA_MANIF", "").astype(str) + " " + df_200.get("HORA_SAIDA_MANIF", "").astype(str),
         errors="coerce"
     )
+
     df_200 = df_200.dropna(subset=["datahorasaida"])
-    df_200f = df_200[(df_200["datahorasaida"] >= inicio) & (df_200["datahorasaida"] < fim)].copy()
+    df_200f = df_200[
+        (df_200["datahorasaida"] >= inicio) &
+        (df_200["datahorasaida"] < fim)
+    ].copy()
 else:
     df_200 = pd.DataFrame()
     df_200f = pd.DataFrame()
 
-inicio_dia = inicio.date()
-fim_dia = fim.date()
-
+# ================= REL 455 =================
 if 'df_455' in st.session_state:
     df_455 = st.session_state.df_455.copy()
 
-    
     for col in ["Data do Ultimo Manifesto", "Data do Ultimo Romaneio"]:
         if col in df_455.columns:
             df_455[col] = pd.to_datetime(df_455[col], errors="coerce")
 
-    df_455 = df_455.dropna(subset=["Data do Ultimo Manifesto", "Data do Ultimo Romaneio"], how="all")
+    df_455 = df_455.dropna(
+        subset=["Data do Ultimo Manifesto", "Data do Ultimo Romaneio"],
+        how="all"
+    )
 
-    condicao_m = (df_455.get("Data do Ultimo Manifesto") >= inicio_dia) & (df_455.get("Data do Ultimo Manifesto") < fim_dt)
-    condicao_r = (df_455.get("Data do Ultimo Romaneio") >= inicio_dia) & (df_455.get("Data do Ultimo Romaneio") < fim_dt)
+    inicio_dt = pd.to_datetime(inicio)
+    fim_dt = pd.to_datetime(fim)
+
+    condicao_m = (
+        (df_455.get("Data do Ultimo Manifesto") >= inicio_dt) &
+        (df_455.get("Data do Ultimo Manifesto") < fim_dt)
+    )
+
+    condicao_r = (
+        (df_455.get("Data do Ultimo Romaneio") >= inicio_dt) &
+        (df_455.get("Data do Ultimo Romaneio") < fim_dt)
+    )
+
     df_455f = df_455[condicao_m | condicao_r].copy()
 
-    
     if "Unidade da Ultima Ocorrencia" in df_455f.columns:
         df_455f = df_455f[df_455f["Unidade da Ultima Ocorrencia"] != "BTR - JK2"]
+
     if "Codigo da Ultima Ocorrencia" in df_455f.columns:
         df_455f = df_455f[df_455f["Codigo da Ultima Ocorrencia"] != 47]
-    condicao_cwb = (df_455f.get("Unidade Destino do Ultimo Manifesto") == "CWB") & (df_455f.get("Ultimo Romaneio").isna())
+
+    condicao_cwb = (
+        (df_455f.get("Unidade Destino do Ultimo Manifesto") == "CWB") &
+        (df_455f.get("Ultimo Romaneio").isna())
+    )
+
     if not df_455f.empty:
         df_455f = df_455f[~condicao_cwb]
+
     if "Mercadoria" in df_455f.columns:
-        df_455f = df_455f[~df_455f["Mercadoria"].isin(["  168-PALLETS", "  001-DIVERSOS"])]
+        df_455f = df_455f[
+            ~df_455f["Mercadoria"].isin(["  168-PALLETS", "  001-DIVERSOS"])
+        ]
+
+    # (resto do seu código segue exatamente igual daqui pra baixo)
 
     
     if "Ultimo Manifesto" in df_455f.columns:
