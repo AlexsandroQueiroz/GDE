@@ -70,12 +70,12 @@ if 'df_455' in st.session_state:
     
     for col in ["Data do Ultimo Manifesto", "Data do Ultimo Romaneio"]:
         if col in df_455.columns:
-            df_455[col] = pd.to_datetime(df_455[col], errors="coerce").dt.date
+            df_455[col] = pd.to_datetime(df_455[col], errors="coerce")
 
     df_455 = df_455.dropna(subset=["Data do Ultimo Manifesto", "Data do Ultimo Romaneio"], how="all")
 
-    condicao_m = (df_455.get("Data do Ultimo Manifesto") >= inicio_dia) & (df_455.get("Data do Ultimo Manifesto") < fim_dia)
-    condicao_r = (df_455.get("Data do Ultimo Romaneio") >= inicio_dia) & (df_455.get("Data do Ultimo Romaneio") < fim_dia)
+    condicao_m = (df_455.get("Data do Ultimo Manifesto") >= inicio_dia) & (df_455.get("Data do Ultimo Manifesto") < fim_dt)
+    condicao_r = (df_455.get("Data do Ultimo Romaneio") >= inicio_dia) & (df_455.get("Data do Ultimo Romaneio") < fim_dt)
     df_455f = df_455[condicao_m | condicao_r].copy()
 
     
