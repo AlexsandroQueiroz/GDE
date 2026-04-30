@@ -61,8 +61,8 @@ else:
     df_200 = pd.DataFrame()
     df_200f = pd.DataFrame()
 
-inicio_dia = inicio.date()
-fim_dia = fim.date()
+inicio_dia = pd.to_datetime(inicio)
+fim_dia = pd.to_datetime(fim)
 
 if 'df_455' in st.session_state:
     df_455 = st.session_state.df_455.copy()
@@ -70,7 +70,7 @@ if 'df_455' in st.session_state:
     
     for col in ["Data do Ultimo Manifesto", "Data do Ultimo Romaneio"]:
         if col in df_455.columns:
-            df_455[col] = pd.to_datetime(df_455[col], errors="coerce").dt.date
+            df_455[col] = pd.to_datetime(df_455[col], errors="coerce")
 
     df_455 = df_455.dropna(subset=["Data do Ultimo Manifesto", "Data do Ultimo Romaneio"], how="all")
 
