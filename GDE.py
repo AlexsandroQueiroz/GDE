@@ -39,13 +39,24 @@ if uploaded_rel455:
 
 
 # Janela de datas
-agora = datetime.now()
-dia_semana = agora.weekday()
-if dia_semana == 0:
-    inicio = (agora - timedelta(days=3)).replace(hour=7, minute=0, second=0, microsecond=0)
-else:
-    inicio = (agora - timedelta(days=1)).replace(hour=7, minute=0, second=0, microsecond=0)
-fim = agora.replace(hour=7, minute=0, second=0, microsecond=0)
+st.subheader("Período do relatório")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    data_inicio = st.date_input("Data início", value=datetime.now().date())
+
+with col2:
+    data_fim = st.date_input("Data fim", value=datetime.now().date())
+
+# Definir horário padrão (07:00)
+inicio = datetime.combine(data_inicio, datetime.min.time()).replace(hour=7)
+fim = datetime.combine(data_fim, datetime.min.time()).replace(hour=7)
+
+# Garantir que fim seja maior que início
+if fim <= inicio:
+    st.warning("Data fim precisa ser maior que a data início.")
+    st.stop()
 
 if 'df_200' in st.session_state:
     df_200 = st.session_state.df_200.copy()
