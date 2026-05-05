@@ -1,9 +1,10 @@
-
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
 import io
 
+# ============ Config ============
+st.set_page_config(page_title="GDE - Final", layout="wide")
 st.set_page_config(page_title="GDE", layout="wide")
 st.markdown(
     """
@@ -17,9 +18,12 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+st.title("Gestão de entregas (Final)")
 st.title("Gestão de entregas")
 
+# -------------------------
 # Uploads
+# -------------------------
 if 'expander_rel200' not in st.session_state:
     st.session_state.expander_rel200 = True
 if 'expander_rel455' not in st.session_state:
@@ -37,29 +41,20 @@ if uploaded_rel455:
     st.session_state.expander_rel455 = False
     st.session_state.df_455 = pd.read_excel(uploaded_rel455, skiprows=1)
 
+# -------------------------
+# Janela de datas (mesma lógica que tinha)
+# -------------------------
 
 # Janela de datas
-st.subheader("Período do relatório")
+agora = datetime.now()
+dia_semana = agora.weekday()
+if dia_semana == 0:
+    inicio = (agora - timedelta(days=3)).replace(hour=7, minute=0, second=0, microsecond=0)
+else:
+    inicio = (agora - timedelta(days=1)).replace(hour=7, minute=0, second=0, microsecond=0)
+fim = agora.replace(hour=7, minute=0, second=0, microsecond=0)
 
-col1, col2 = st.columns(2)
-
-with col1:
-    data_inicio = st.date_input("Data início")
-    hora_inicio = st.time_input("Hora início", value=datetime.strptime("07:00", "%H:%M").time())
-
-with col2:
-    data_fim = st.date_input("Data fim")
-    hora_fim = st.time_input("Hora fim", value=datetime.strptime("07:00", "%H:%M").time())
-
-# Combinar data + hora
-inicio = datetime.combine(data_inicio, hora_inicio)
-fim = datetime.combine(data_fim, hora_fim)
-
-# Validação básica
-if fim <= inicio:
-    st.warning("O período está inválido. Tenta não inverter o tempo.")
-    st.stop()
-
+# Preparar df_200 e df_200f
 if 'df_200' in st.session_state:
     df_200 = st.session_state.df_200.copy()
     if "SITUACAO" in df_200.columns:
@@ -74,16 +69,20 @@ else:
     df_200 = pd.DataFrame()
     df_200f = pd.DataFrame()
 
-inicio_dia = pd.to_datetime(inicio)
-fim_dia = pd.to_datetime(fim)
+inicio_dia = inicio.date()
+fim_dia = fim.date()
 
+# -------------------------
+# Processar df_455 e montar df_final
+# -------------------------
 if 'df_455' in st.session_state:
     df_455 = st.session_state.df_455.copy()
 
+    # Normaliza colunas de data se existirem
     
     for col in ["Data do Ultimo Manifesto", "Data do Ultimo Romaneio"]:
         if col in df_455.columns:
-            df_455[col] = pd.to_datetime(df_455[col], errors="coerce")
+            df_455[col] = pd.to_datetime(df_455[col], errors="coerce").dt.date
 
     df_455 = df_455.dropna(subset=["Data do Ultimo Manifesto", "Data do Ultimo Romaneio"], how="all")
 
@@ -91,6 +90,7 @@ if 'df_455' in st.session_state:
     condicao_r = (df_455.get("Data do Ultimo Romaneio") >= inicio_dia) & (df_455.get("Data do Ultimo Romaneio") < fim_dia)
     df_455f = df_455[condicao_m | condicao_r].copy()
 
+    # Filtros originais
     
     if "Unidade da Ultima Ocorrencia" in df_455f.columns:
         df_455f = df_455f[df_455f["Unidade da Ultima Ocorrencia"] != "BTR - JK2"]
@@ -102,6 +102,7 @@ if 'df_455' in st.session_state:
     if "Mercadoria" in df_455f.columns:
         df_455f = df_455f[~df_455f["Mercadoria"].isin(["  168-PALLETS", "  001-DIVERSOS"])]
 
+    # Ajustes de manifesto e placa
     
     if "Ultimo Manifesto" in df_455f.columns:
         df_455f["Manifesto_Ajustado"] = df_455f["Ultimo Manifesto"].astype(str).str.replace(" ", "", regex=False)
@@ -112,15 +113,20 @@ if 'df_455' in st.session_state:
         mapa_manifesto_placa = df_200.set_index("NUM_MANIF")["PLACA_CAVALO"]
         df_455f.loc[mask_sem_placa, "Placa_Final"] = df_455f.loc[mask_sem_placa, "Manifesto_Ajustado"].map(mapa_manifesto_placa)
 
+    # mapa placa->motorista pelo rel 200 (se existir)
     
     mapa_placa_motorista = {}
     if not df_200f.empty and "PLACA_CAVALO" in df_200f.columns and "MOTORISTA" in df_200f.columns:
         mapa_placa_motorista = df_200f.drop_duplicates(subset=["PLACA_CAVALO"]).set_index("PLACA_CAVALO")["MOTORISTA"].to_dict()
 
+    # Se o relatório 455 já tiver coluna Motorista, mantemos (prioridade)
     
     if "Motorista" not in df_455f.columns:
         df_455f["Motorista"] = ""
 
+    # -------------------------
+    # Montar df_final base com renomeações
+    # -------------------------
     
     rename_map = {}
     if "Serie/Numero CTRC" in df_455f.columns:
@@ -138,6 +144,7 @@ if 'df_455' in st.session_state:
 
     df_final = df_455f.rename(columns=rename_map)
 
+    # Garante colunas mínimas
     
     for c in ["CT-e", "Placa_Final", "Motorista", "Cliente", "Destino", "Cidade", "NF", "Tipo"]:
         if c not in df_final.columns:
@@ -145,9 +152,14 @@ if 'df_455' in st.session_state:
 
     df_final = df_final[["CT-e", "Placa_Final", "Motorista", "Cliente", "Destino", "Cidade", "NF", "Tipo"]].copy()
 
+    # cria Status (vazio por padrão)
     
     df_final["Status"] = ""
 
+    # -------------------------
+    # Carregar Google Sheets (mesmo link passado por você)
+    # A = CT-e, C = Shipment, F = Placa, G = Motorista
+    # -------------------------
   
     url_ship = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm_mQYZvgTLu4C6Xpu1FvXw_IX0Eatl9MRMxkhH8BylxZO0POFN_oji0XxnGddkvaGN3PDJYYWD_Ed/pub?output=csv"
 
@@ -158,12 +170,17 @@ if 'df_455' in st.session_state:
         st.error(f"Erro ao carregar Google Sheets: {e}")
         df_sheet = pd.DataFrame()
 
+    # -------------------------
+    # Tratar Shipment (coluna C esperada)
+    # -------------------------
     
     if not df_sheet.empty:
+        # renomeia colunas esperadas se possível
         
         if len(df_sheet.columns) >= 3:
             df_sheet = df_sheet.rename(columns={df_sheet.columns[0]: "CT-e", df_sheet.columns[2]: "Shipment"})
         else:
+            # tenta encontrar coluna com 'ship' no nome
             
             df_sheet = df_sheet.rename(columns={df_sheet.columns[0]: "CT-e"})
             for col in df_sheet.columns:
@@ -190,16 +207,21 @@ if 'df_455' in st.session_state:
     else:
         df_sheet["Shipment"] = ""
 
+    # -------------------------
+    # Tratar motoristas no sheet (colunas F e G esperadas: índices 5 e 6)
+    # -------------------------
    
     df_motoristas = pd.DataFrame(columns=["Placa", "Motorista_Sheet"])
     if not df_sheet.empty:
         if len(df_sheet.columns) >= 7:
+            # renomeia colunas 5 e 6 para Placa e Motorista_Sheet
             
             df_motoristas = df_sheet.rename(columns={
                 df_sheet.columns[5]: "Placa",
                 df_sheet.columns[6]: "Motorista_Sheet"
             })[["Placa", "Motorista_Sheet"]].copy()
         else:
+            # tenta encontrar colunas cujo nome contenha 'plac' e 'motor' (fallback inteligente)
             
             cols_low = [c.lower() for c in df_sheet.columns]
             placa_col = None
@@ -211,6 +233,7 @@ if 'df_455' in st.session_state:
                     motor_col = df_sheet.columns[i]
             if placa_col and motor_col:
                 df_motoristas = df_sheet[[placa_col, motor_col]].rename(columns={placa_col: "Placa", motor_col: "Motorista_Sheet"}).copy()
+    # garante formatos e sem NaN
    
     if not df_motoristas.empty:
         df_motoristas["Placa"] = df_motoristas["Placa"].astype(str).str.strip()
@@ -218,24 +241,33 @@ if 'df_455' in st.session_state:
     else:
         df_motoristas = pd.DataFrame(columns=["Placa", "Motorista_Sheet"])
 
+    # -------------------------
+    # Merge Shipment no df_final
+    # -------------------------
     
     if "CT-e" in df_sheet.columns:
         df_final = df_final.merge(df_sheet[["CT-e", "Shipment"]], on="CT-e", how="left")
     else:
         df_final = df_final.assign(Shipment="")
 
+    # -------------------------
+    # Motorista: prioridade 1=já vindo no 455, 2=mapa do rel200, 3=Sheet
+    # -------------------------
+    # aplica mapa do rel200 (se existir)
     
     if "Placa_Final" in df_final.columns:
         df_final["Motorista_200"] = df_final["Placa_Final"].map(mapa_placa_motorista) if mapa_placa_motorista else ""
     else:
         df_final["Motorista_200"] = ""
 
+    # se Motorista já existir e não estiver vazio, mantemos; senão usamos Motorista_200
     
     df_final["Motorista"] = df_final.apply(
         lambda row: row["Motorista"] if pd.notna(row.get("Motorista")) and str(row.get("Motorista")).strip() != "" else (row.get("Motorista_200") if pd.notna(row.get("Motorista_200")) else ""),
         axis=1
     )
 
+    # merge com motoristas do sheet (Placa)
     
     if not df_motoristas.empty and "Placa_Final" in df_final.columns:
         df_final = df_final.merge(df_motoristas, left_on="Placa_Final", right_on="Placa", how="left")
@@ -245,15 +277,18 @@ if 'df_455' in st.session_state:
         )
         df_final = df_final.drop(columns=["Placa", "Motorista_Sheet"], errors="ignore")
 
+    # remove coluna auxiliar
    
     df_final = df_final.drop(columns=["Motorista_200"], errors="ignore")
 
+    # renomeia Placa_Final -> Placa e organiza ordem
     
     if "Placa_Final" in df_final.columns:
         df_final = df_final.rename(columns={"Placa_Final": "Placa"})
     if "Shipment" not in df_final.columns:
         df_final["Shipment"] = ""
 
+    # ordem final solicitada: CT-e / Status / Placa / Motorista / Cliente / Destino / Cidade / Shipment / NF / Tipo
 
     final_order = ["CT-e", "Status", "Placa", "Motorista", "Cliente", "Destino", "Cidade", "Shipment", "NF", "Tipo"]
     for col in final_order:
@@ -261,9 +296,11 @@ if 'df_455' in st.session_state:
             df_final[col] = ""
     df_final = df_final[final_order].copy()
 
+    # remover duplicatas por CT-e (mantendo a primeira ocorrência)
 
     df_final = df_final.drop_duplicates(subset=["CT-e"], keep="first").copy()
 
+    # Exibir e botão de download
    
     st.subheader("Relatório Consolidado")
     st.dataframe(df_final.set_index('CT-e'), use_container_width=True)
@@ -297,6 +334,7 @@ if 'df_455' in st.session_state:
         except Exception:
             pass
 
+        # cor alternada por motorista (fallback seguro)
    
         placas = df_final["Placa"].fillna("").astype(str).tolist()
         paleta = ['#FFFFFF', '#F2F2F2']
