@@ -44,18 +44,20 @@ st.subheader("Período do relatório")
 col1, col2 = st.columns(2)
 
 with col1:
-    data_inicio = st.date_input("Data início", value=datetime.now().date())
+    data_inicio = st.date_input("Data início")
+    hora_inicio = st.time_input("Hora início", value=datetime.strptime("07:00", "%H:%M").time())
 
 with col2:
-    data_fim = st.date_input("Data fim", value=datetime.now().date())
+    data_fim = st.date_input("Data fim")
+    hora_fim = st.time_input("Hora fim", value=datetime.strptime("07:00", "%H:%M").time())
 
-# Definir horário padrão (07:00)
-inicio = datetime.combine(data_inicio, datetime.min.time()).replace(hour=7)
-fim = datetime.combine(data_fim, datetime.min.time()).replace(hour=7)
+# Combinar data + hora
+inicio = datetime.combine(data_inicio, hora_inicio)
+fim = datetime.combine(data_fim, hora_fim)
 
-# Garantir que fim seja maior que início
+# Validação básica
 if fim <= inicio:
-    st.warning("Data fim precisa ser maior que a data início.")
+    st.warning("O período está inválido. Tenta não inverter o tempo.")
     st.stop()
 
 if 'df_200' in st.session_state:
