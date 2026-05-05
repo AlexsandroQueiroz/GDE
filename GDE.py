@@ -18,7 +18,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.title("Gestão de entregas (Final)")
 st.title("Gestão de entregas")
 
 # -------------------------
