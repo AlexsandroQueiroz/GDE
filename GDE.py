@@ -45,14 +45,33 @@ if uploaded_rel455:
 # Janela de datas (mesma lógica que tinha)
 # -------------------------
 
-# Janela de datas
-agora = datetime.now()
-dia_semana = agora.weekday()
-if dia_semana == 0:
-    inicio = (agora - timedelta(days=3)).replace(hour=7, minute=0, second=0, microsecond=0)
-else:
-    inicio = (agora - timedelta(days=1)).replace(hour=7, minute=0, second=0, microsecond=0)
-fim = agora.replace(hour=7, minute=0, second=0, microsecond=0)
+# -------------------------
+# Período selecionável (NOVO)
+# -------------------------
+
+st.subheader("Período do relatório")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    data_inicio = st.date_input("Data início")
+    hora_inicio = st.time_input("Hora início", value=datetime.strptime("07:00", "%H:%M").time())
+
+with col2:
+    data_fim = st.date_input("Data fim")
+    hora_fim = st.time_input("Hora fim", value=datetime.strptime("07:00", "%H:%M").time())
+
+# Combinar data + hora
+inicio = datetime.combine(data_inicio, hora_inicio)
+fim = datetime.combine(data_fim, hora_fim)
+
+# Validação
+if fim <= inicio:
+    st.warning("Período inválido.")
+    st.stop()
+
+# Exibição bonitinha
+st.caption(f"Período selecionado: {inicio.strftime('%d/%m/%Y %H:%M')} até {fim.strftime('%d/%m/%Y %H:%M')}")
 
 # Preparar df_200 e df_200f
 if 'df_200' in st.session_state:
